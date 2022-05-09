@@ -29,6 +29,9 @@ namespace MVC_Workshop.Models
         [DataType(DataType.Date)]
         public DateTime? HireDate { get; set; }
 
+        [Display(Name = "Profile Picture")]
+        public string? ProfilePicture { get; set; }
+
         public ICollection<Course>? CoursesFirst { get; set; }
 
         public ICollection<Course>? CoursesSecond { get; set; }

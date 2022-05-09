@@ -1,4 +1,4 @@
-﻿@model Teacher
+﻿@model TeacherViewModel
 
 @{
     ViewData["Title"] = "Create";
@@ -13,34 +13,42 @@
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
-                <label asp-for="FirstName" class="control-label"></label>
-                <input asp-for="FirstName" class="form-control" />
-                <span asp-validation-for="FirstName" class="text-danger"></span>
+                <label asp-for="Teacher.FirstName" class="control-label"></label>
+                <input asp-for="Teacher.FirstName" class="form-control" />
+                <span asp-validation-for="Teacher.FirstName" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="LastName" class="control-label"></label>
-                <input asp-for="LastName" class="form-control" />
-                <span asp-validation-for="LastName" class="text-danger"></span>
+                <label asp-for="Teacher.LastName" class="control-label"></label>
+                <input asp-for="Teacher.LastName" class="form-control" />
+                <span asp-validation-for="Teacher.LastName" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Degree" class="control-label"></label>
-                <input asp-for="Degree" class="form-control" />
-                <span asp-validation-for="Degree" class="text-danger"></span>
+                <label asp-for="Teacher.Degree" class="control-label"></label>
+                <input asp-for="Teacher.Degree" class="form-control" />
+                <span asp-validation-for="Teacher.Degree" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="AcademicRank" class="control-label"></label>
-                <input asp-for="AcademicRank" class="form-control" />
-                <span asp-validation-for="AcademicRank" class="text-danger"></span>
+                <label asp-for="Teacher.AcademicRank" class="control-label"></label>
+                <input asp-for="Teacher.AcademicRank" class="form-control" />
+                <span asp-validation-for="Teacher.AcademicRank" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="OfficeNumber" class="control-label"></label>
-                <input asp-for="OfficeNumber" class="form-control" />
-                <span asp-validation-for="OfficeNumber" class="text-danger"></span>
+                <label asp-for="Teacher.OfficeNumber" class="control-label"></label>
+                <input asp-for="Teacher.OfficeNumber" class="form-control" />
+                <span asp-validation-for="Teacher.OfficeNumber" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="HireDate" class="control-label"></label>
-                <input asp-for="HireDate" class="form-control" />
-                <span asp-validation-for="HireDate" class="text-danger"></span>
+                <label asp-for="Teacher.HireDate" class="control-label"></label>
+                <input asp-for="Teacher.HireDate" class="form-control" />
+                <span asp-validation-for="Teacher.HireDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ProfileImage" class="control-label"></label>
+                <div class="custom-file">
+                    <input asp-for="ProfileImage" class="custom-file-input" id="customFile" />
+                    <label class="custom-file-label" for="customFile">Choose File</label>
+                </div>
+                <span asp-validation-for="ProfileImage" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
@@ -54,5 +62,15 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+    await Html.RenderPartialAsync("_ValidationScriptsPartial");
+}
+
+<script>
+    // Add the following code if you want the name of the file to appear on select
+    $(".custom-file-input").on("change", function () {
+        var fileName = $(this).val().split("\\").pop();
+        $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+    });
+</script>
 }

@@ -8,16 +8,19 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MVC_Workshop.Data;
 using MVC_Workshop.Models;
+using MVC_Workshop.ViewModels;
 
 namespace MVC_Workshop.Controllers
 {
     public class StudentsController : Controller
     {
         private readonly MVCWorkshopContext _context;
+        private readonly IWebHostEnvironment webHostEnvironment;
 
-        public StudentsController(MVCWorkshopContext context)
+        public StudentsController(MVCWorkshopContext context, IWebHostEnvironment hostEnvironment)
         {
             _context = context;
+            webHostEnvironment = hostEnvironment;
         }
 
         // GET: Students
@@ -75,17 +78,28 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,StudentId,FirstName,LastName,EnrollmentDate,AcquiredCredits,CurrentSemester,EducationLevel")] Student student)
+        public async Task<IActionResult> Create(StudentViewModel viewModel)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(student);
+                if (viewModel.ProfileImage != null)
+                {
+                    string uniqueFileName = UploadedFile(viewModel);
+                    viewModel.Student.ProfilePicture = uniqueFileName;
+                }
+
+                else
+                {
+                    viewModel.Student.ProfilePicture = "_default.png";
+                }
+
+                _context.Add(viewModel.Student);
                 await _context.SaveChangesAsync();
 
                 return RedirectToAction(nameof(Index));
             }
 
-            return View(student);
+            return View(viewModel);
         }
 
         // GET: Students/Edit/5
@@ -97,12 +111,19 @@ namespace MVC_Workshop.Controllers
             }
 
             var student = await _context.Student.FindAsync(id);
+
             if (student == null)
             {
                 return NotFound();
             }
 
-            return View(student);
+            StudentViewModel viewModel = new StudentViewModel
+            {
+                Student = student,
+                ProfileImage = null
+            };
+
+            return View(viewModel);
         }
 
         // POST: Students/Edit/5
@@ -110,9 +131,9 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,StudentId,FirstName,LastName,EnrollmentDate,AcquiredCredits,CurrentSemester,EducationLevel")] Student student)
+        public async Task<IActionResult> Edit(int id, StudentViewModel viewModel)
         {
-            if (id != student.Id)
+            if (id != viewModel.Student.Id)
             {
                 return NotFound();
             }
@@ -121,12 +142,18 @@ namespace MVC_Workshop.Controllers
             {
                 try
                 {
-                    _context.Update(student);
+                    if (viewModel.ProfileImage != null)
+                    {
+                        string uniqueFileName = UploadedFile(viewModel);
+                        viewModel.Student.ProfilePicture = uniqueFileName;
+                    }
+
+                    _context.Update(viewModel.Student);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!StudentExists(student.Id))
+                    if (!StudentExists(viewModel.Student.Id))
                     {
                         return NotFound();
                     }
@@ -139,7 +166,7 @@ namespace MVC_Workshop.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            return View(student);
+            return View(viewModel);
         }
 
         // GET: Students/Delete/5
@@ -176,6 +203,29 @@ namespace MVC_Workshop.Controllers
         private bool StudentExists(int id)
         {
             return _context.Student.Any(s => s.Id == id);
+        }
+
+        public async Task<IActionResult> StudentLogin()
+        {
+            return View(_context.Student);
+        }
+
+        private string UploadedFile(StudentViewModel model)
+        {
+            string uniqueFileName = null;
+
+            if (model.ProfileImage != null)
+            {
+                string uploadsFolder = Path.Combine(webHostEnvironment.WebRootPath, "images");
+                uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(model.ProfileImage.FileName);
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    model.ProfileImage.CopyTo(fileStream);
+                }
+            }
+
+            return uniqueFileName;
         }
     }
 }

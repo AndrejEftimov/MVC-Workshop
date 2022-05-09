@@ -21,7 +21,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Courses
-        public async Task<IActionResult> Index(string title, int semester, string programme)
+        public async Task<IActionResult> Index(string? title, int? semester, string? programme)
         {
             IQueryable<Course> courses = _context.Course.AsQueryable();
 
@@ -193,6 +193,39 @@ namespace MVC_Workshop.Controllers
         private bool CourseExists(int id)
         {
             return _context.Course.Any(e => e.Id == id);
+        }
+
+        public async Task<IActionResult> TeacherIndex(int teacherId, string? title, int? semester, string? programme)
+        {
+            IQueryable<Course> courses = _context.Course.AsQueryable();
+
+            courses = _context.Course.Where(c => c.FirstTeacherId == teacherId || c.SecondTeacherId == teacherId);
+
+            if (!String.IsNullOrEmpty(title))
+            {
+                courses = courses.Where(c => c.Title.Contains(title));
+            }
+
+            if (semester >= 1)
+            {
+                courses = courses.Where(c => c.Semester == semester);
+            }
+
+            if (!String.IsNullOrEmpty(programme))
+            {
+                courses = courses.Where(c => c.Programme.Contains(programme));
+            }
+
+            courses = courses.Include(c => c.FirstTeacher).Include(c => c.SecondTeacher);
+
+            ViewData["teacherId"] = teacherId;
+
+            // for the _NonAdminLayout
+            Teacher t = await _context.Teacher.FindAsync(teacherId);
+            ViewData["ProfilePicture"] = t.ProfilePicture;
+            ViewData["FullName"] = t.FullName;
+
+            return View(courses.ToList());
         }
     }
 }

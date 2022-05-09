@@ -34,6 +34,9 @@ namespace MVC_Workshop.Models
         [StringLength(25)]
         public string? EducationLevel { get; set; }
 
+        [Display(Name = "Profile Picture")]
+        public string? ProfilePicture { get; set; }
+
         public ICollection<Enrollment>? Enrollments { get; set; }
 
         public string FullName

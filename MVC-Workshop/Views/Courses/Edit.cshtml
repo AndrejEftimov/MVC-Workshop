@@ -54,10 +54,10 @@
         </form>
 
         <div class"form-group" style="margin-top: 10px;">
-            <a class="btn btn-success" style="min-width: 19%;" asp-controller="Enrollments" asp-action="Create" asp-route-courseId=@Model.Id>Add Enrollments</a>
+            <a class="btn btn-success" style="min-width: 19%;" asp-controller="Enrollments" asp-action="AdminCreate" asp-route-courseId=@Model.Id>Add Enrollments</a>
         </div>
         <div class"form-group" style="margin-top: 10px;">
-            <a class="btn btn-info" style="min-width: 19%; color: white" asp-controller="Enrollments" asp-action="" asp-route-courseId="@Model.Id">Unenroll Students</a>
+            <a class="btn btn-info" style="min-width: 19%; color: white" asp-controller="Enrollments" asp-action="AdminEditMultiple" asp-route-courseId="@Model.Id">Unenroll Students</a>
         </div>
     </div>
 </div>

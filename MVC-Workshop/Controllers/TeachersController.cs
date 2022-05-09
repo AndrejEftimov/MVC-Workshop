@@ -8,16 +8,19 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MVC_Workshop.Data;
 using MVC_Workshop.Models;
+using MVC_Workshop.ViewModels;
 
 namespace MVC_Workshop.Controllers
 {
     public class TeachersController : Controller
     {
         private readonly MVCWorkshopContext _context;
+        private readonly IWebHostEnvironment webHostEnvironment;
 
-        public TeachersController(MVCWorkshopContext context)
+        public TeachersController(MVCWorkshopContext context, IWebHostEnvironment hostEnvironment)
         {
             _context = context;
+            webHostEnvironment = hostEnvironment;
         }
 
         // GET: Teachers
@@ -80,16 +83,28 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,Degree,AcademicRank,OfficeNumber,HireDate")] Teacher teacher)
+        public async Task<IActionResult> Create(TeacherViewModel viewModel)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(teacher);
+                if (viewModel.ProfileImage != null)
+                {
+                    string uniqueFileName = UploadedFile(viewModel);
+                    viewModel.Teacher.ProfilePicture = uniqueFileName;
+                }
+
+                else
+                {
+                    viewModel.Teacher.ProfilePicture = "_default.png";
+                }
+
+                _context.Add(viewModel.Teacher);
                 await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
 
-            return View(teacher);
+            return View(viewModel);
         }
 
         // GET: Teachers/Edit/5
@@ -101,12 +116,19 @@ namespace MVC_Workshop.Controllers
             }
 
             var teacher = await _context.Teacher.FindAsync(id);
+
             if (teacher == null)
             {
                 return NotFound();
             }
 
-            return View(teacher);
+            TeacherViewModel viewModel = new TeacherViewModel
+            {
+                Teacher = teacher,
+                ProfileImage = null
+            };
+
+            return View(viewModel);
         }
 
         // POST: Teachers/Edit/5
@@ -114,24 +136,29 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FirstName,LastName,Degree,AcademicRank,OfficeNumber,HireDate")] Teacher teacher)
+        public async Task<IActionResult> Edit(int id, TeacherViewModel viewModel)
         {
-            if (id != teacher.Id)
+            if (id != viewModel.Teacher.Id)
             {
                 return NotFound();
             }
 
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-
                 try
                 {
-                    _context.Update(teacher);
+                    if (viewModel.ProfileImage != null)
+                    {
+                        string uniqueFileName = UploadedFile(viewModel);
+                        viewModel.Teacher.ProfilePicture = uniqueFileName;
+                    }
+
+                    _context.Update(viewModel.Teacher);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!TeacherExists(teacher.Id))
+                    if (!TeacherExists(viewModel.Teacher.Id))
                     {
                         return NotFound();
                     }
@@ -144,7 +171,7 @@ namespace MVC_Workshop.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            return View(teacher);
+            return View(viewModel);
         }
 
         // GET: Teachers/Delete/5
@@ -179,6 +206,29 @@ namespace MVC_Workshop.Controllers
         private bool TeacherExists(int id)
         {
             return _context.Teacher.Any(e => e.Id == id);
+        }
+
+        public async Task<IActionResult> TeacherLogin()
+        {
+            return View(_context.Teacher);
+        }
+
+        private string UploadedFile(TeacherViewModel model)
+        {
+            string uniqueFileName = null;
+
+            if (model.ProfileImage != null)
+            {
+                string uploadsFolder = Path.Combine(webHostEnvironment.WebRootPath, "images");
+                uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(model.ProfileImage.FileName);
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    model.ProfileImage.CopyTo(fileStream);
+                }
+            }
+
+            return uniqueFileName;
         }
     }
 }

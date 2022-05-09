@@ -1,0 +1,24 @@
+﻿@model IEnumerable<Teacher>
+
+@{
+    ViewData["Title"] = "TeacherLogin";
+    Layout = "_NonAdminLayout";
+}
+
+<div class="text-center">
+    <h1 class="display-4">TEACHER<br /> &gt; Select User &lt; </h1>
+</div>
+
+<br />
+
+<ul style="width: 50%; margin-left: 45%; list-style: none; padding: 0;">
+    @foreach (var t in Model)
+    {
+        <li style="font-weight: bold; height: 50px;">
+            <a asp-controller="Courses" asp-action="TeacherIndex" asp-route-teacherId="@t.Id" style="height: inherit;">
+                <img src="~/images/@t.ProfilePicture" style="height: inherit; border-radius: 25px;" /> &gt; @Html.DisplayFor(model => t.FullName)
+            </a>
+        </li>
+        <br />
+    }
+</ul>

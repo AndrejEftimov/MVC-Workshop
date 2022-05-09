@@ -1,0 +1,78 @@
+﻿@model IEnumerable<Course>
+
+@{
+    ViewData["Title"] = "TeacherIndex";
+    Layout = "_NonAdminLayout";
+}
+
+<h1>Courses Teaching</h1>
+
+<form asp-controller="Courses" asp-action="TeacherIndex" method="get">
+    <p>
+        <input type="number" name="teacherId" value="@ViewData["teacherId"]" hidden />
+        Title <input name=title type=text/> &ensp;
+        Semester <input name=semester type="number"/> &ensp;
+        Programme <input name=programme type=text/>
+        <input type="submit" value="Search"/>
+    </p>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Credits)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Semester)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Programme)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EducationLevel)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FirstTeacher)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SecondTeacher)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Title)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Credits)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Semester)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Programme)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.EducationLevel)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.FirstTeacher.FullName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.SecondTeacher.FullName)
+                </td>
+                <td>
+                    <a asp-controller="Enrollments" asp-action="TeacherCourseIndex" asp-route-courseId="@item.Id" asp-route-teacherId=@ViewData["teacherId"]>View Students</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

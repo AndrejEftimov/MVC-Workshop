@@ -1,0 +1,52 @@
+﻿@model UnenrollMultipleViewModel
+
+@{
+    ViewData["Title"] = "AdminEditMultiple";
+}
+
+<h1>Unenroll Students</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="AdminEditMultiple">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input asp-for="CourseId" hidden />
+            <div class="form-group">
+                <label asp-for="CourseId" class="control-label">Course</label>
+                <select asp-for="CourseId" class="form-control" asp-items="ViewBag.CourseList" disabled></select>
+                <span asp-validation-for="CourseId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="StudentIds" class="control-label">Students</label>
+                <select asp-for="StudentIds" class="form-control js-example-basic-multiple" multiple="multiple" asp-items="ViewBag.StudentList">
+                    <option value="">Select</option>
+                </select>
+                <span asp-validation-for="StudentIds" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FinishDate" class="control-label"></label>
+                <input asp-for="FinishDate" class="form-control" />
+                <span asp-validation-for="FinishDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+    await Html.RenderPartialAsync("_ValidationScriptsPartial");
+}
+
+<script src="~/lib/select2/js/select2.js"></script>
+<link href="~/lib/select2/css/select2.css" rel="stylesheet" />
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.js-example-basic-multiple').select2();
+    });
+</script>
+}

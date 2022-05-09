@@ -1,0 +1,107 @@
+﻿@model EnrollmentUploadViewModel
+
+@{
+    ViewData["Title"] = "StudentEdit";
+    Layout = "_NonAdminLayout";
+}
+
+<h1>Edit</h1>
+
+<h4>Enrollment</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="StudentEdit" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="number" name="studentId" value="@ViewData["studentId"]" hidden />
+            <input type="hidden" asp-for="Enrollment.Id" />
+            <input asp-for="Enrollment.CourseId" hidden />
+            <input asp-for="Enrollment.StudentId" hidden />
+            <div class="form-group">
+                <label asp-for="Enrollment.Course" class="control-label"></label>
+                <select asp-for="Enrollment.CourseId" class="form-control" asp-items="ViewBag.CourseList" disabled></select>
+                <span asp-validation-for="Enrollment.CourseId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Enrollment.Student" class="control-label"></label>
+                <select asp-for="Enrollment.StudentId" class="form-control" asp-items="ViewBag.StudentList" disabled></select>
+                <span asp-validation-for="Enrollment.StudentId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Enrollment.Semester" class="control-label"></label>
+                <input asp-for="Enrollment.Semester" class="form-control" readonly />
+                <span asp-validation-for="Enrollment.Semester" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Enrollment.Year" class="control-label"></label>
+                <input asp-for="Enrollment.Year" class="form-control" readonly />
+                <span asp-validation-for="Enrollment.Year" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Enrollment.Grade" class="control-label"></label>
+                <input asp-for="Enrollment.Grade" class="form-control" readonly />
+                <span asp-validation-for="Enrollment.Grade" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Enrollment.SeminarUrl" class="control-label"></label>
+                <input asp-for="Enrollment.SeminarUrl" class="form-control" readonly />
+                <span asp-validation-for="Enrollment.SeminarUrl" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SeminarFile" class="control-label"></label>
+                <div class="custom-file">
+                    <input asp-for="SeminarFile" class="custom-file-input" id="customFile" disabled="@(Model.Enrollment.FinishDate == null ? false : true)" />
+                    <label class="custom-file-label" for="customFile">Choose File</label>
+                </div>
+                <span asp-validation-for="SeminarFile" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Enrollment.ProjectUrl" class="control-label"></label>
+                <input asp-for="Enrollment.ProjectUrl" class="form-control" />
+                <span asp-validation-for="Enrollment.ProjectUrl" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Enrollment.ExamPoints" class="control-label"></label>
+                <input asp-for="Enrollment.ExamPoints" class="form-control" readonly />
+                <span asp-validation-for="Enrollment.ExamPoints" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Enrollment.SeminarPoints" class="control-label"></label>
+                <input asp-for="Enrollment.SeminarPoints" class="form-control" readonly />
+                <span asp-validation-for="Enrollment.SeminarPoints" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Enrollment.ProjectPoints" class="control-label"></label>
+                <input asp-for="Enrollment.ProjectPoints" class="form-control" readonly />
+                <span asp-validation-for="Enrollment.ProjectPoints" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Enrollment.AdditionalPoints" class="control-label"></label>
+                <input asp-for="Enrollment.AdditionalPoints" class="form-control" readonly />
+                <span asp-validation-for="Enrollment.AdditionalPoints" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Enrollment.FinishDate" class="control-label"></label>
+                <input asp-for="Enrollment.FinishDate" class="form-control" readonly />
+                <span asp-validation-for="Enrollment.FinishDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+    await Html.RenderPartialAsync("_ValidationScriptsPartial");
+}
+
+<script>
+    // Add the following code if you want the name of the file to appear on select
+    $(".custom-file-input").on("change", function () {
+        var fileName = $(this).val().split("\\").pop();
+        $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+    });
+</script>
+}
