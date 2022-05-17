@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ using MVC_Workshop.ViewModels;
 
 namespace MVC_Workshop.Controllers
 {
+    [Authorize]
     public class TeachersController : Controller
     {
         private readonly MVCWorkshopContext _context;
@@ -24,6 +26,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Teachers
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index(string firstname, string lastname, string degree, string academicRank)
         {
             IQueryable<Teacher> teachers = _context.Teacher.AsQueryable();
@@ -54,6 +57,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Teachers/Details/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -73,6 +77,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Teachers/Create
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
@@ -83,6 +88,7 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(TeacherViewModel viewModel)
         {
             if (ModelState.IsValid)
@@ -108,6 +114,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Teachers/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -136,6 +143,7 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id, TeacherViewModel viewModel)
         {
             if (id != viewModel.Teacher.Id)
@@ -175,6 +183,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Teachers/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -195,6 +204,7 @@ namespace MVC_Workshop.Controllers
         // POST: Teachers/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var teacher = await _context.Teacher.FindAsync(id);
@@ -208,6 +218,7 @@ namespace MVC_Workshop.Controllers
             return _context.Teacher.Any(e => e.Id == id);
         }
 
+        // NOT USED IN APPLICATION
         public async Task<IActionResult> TeacherLogin()
         {
             return View(_context.Teacher);

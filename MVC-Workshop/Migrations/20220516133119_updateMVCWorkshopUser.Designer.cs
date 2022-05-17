@@ -4,6 +4,7 @@ using MVC_Workshop.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MVC_Workshop.Migrations
 {
     [DbContext(typeof(MVCWorkshopContext))]
-    partial class MVCWorkshopContextModelSnapshot : ModelSnapshot
+    [Migration("20220516133119_updateMVCWorkshopUser")]
+    partial class updateMVCWorkshopUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

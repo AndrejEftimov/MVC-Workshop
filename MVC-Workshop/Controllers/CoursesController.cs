@@ -3,24 +3,31 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using MVC_Workshop.Areas.Identity.Data;
 using MVC_Workshop.Data;
 using MVC_Workshop.Models;
 
 namespace MVC_Workshop.Controllers
 {
+    [Authorize]
     public class CoursesController : Controller
     {
         private readonly MVCWorkshopContext _context;
+        private UserManager<MVCWorkshopUser> userManager;
 
-        public CoursesController(MVCWorkshopContext context)
+        public CoursesController(MVCWorkshopContext context, UserManager<MVCWorkshopUser> UserManager)
         {
             _context = context;
+            userManager = UserManager;
         }
 
         // GET: Courses
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index(string? title, int? semester, string? programme)
         {
             IQueryable<Course> courses = _context.Course.AsQueryable();
@@ -46,6 +53,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Courses/Details/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -69,6 +77,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Courses/Create
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             ViewData["FirstTeacherList"] = new SelectList(_context.Teacher, "Id", "FullName");
@@ -82,6 +91,7 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([Bind("Id,Title,Credits,Semester,Programme,EducationLevel,FirstTeacherId,SecondTeacherId")] Course course)
         {
             if (ModelState.IsValid)
@@ -98,6 +108,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Courses/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -123,6 +134,7 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Credits,Semester,Programme,EducationLevel,FirstTeacherId,SecondTeacherId")] Course course)
         {
             if (id != course.Id)
@@ -159,6 +171,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Courses/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -182,6 +195,7 @@ namespace MVC_Workshop.Controllers
         // POST: Courses/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var course = await _context.Course.FindAsync(id);
@@ -195,8 +209,19 @@ namespace MVC_Workshop.Controllers
             return _context.Course.Any(e => e.Id == id);
         }
 
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> TeacherIndex(int teacherId, string? title, int? semester, string? programme)
         {
+            Teacher teacher = _context.Teacher.FirstOrDefault(t => t.Id == teacherId);
+
+            if (teacher == null)
+                return NotFound();
+            // get logged in user
+            MVCWorkshopUser currUser = await userManager.GetUserAsync(User);
+            // check if logged in user has access
+            if (teacher.Id != currUser.TeacherId)
+                return LocalRedirect("/Identity/Account/AccessDenied");
+
             IQueryable<Course> courses = _context.Course.AsQueryable();
 
             courses = _context.Course.Where(c => c.FirstTeacherId == teacherId || c.SecondTeacherId == teacherId);
@@ -219,11 +244,6 @@ namespace MVC_Workshop.Controllers
             courses = courses.Include(c => c.FirstTeacher).Include(c => c.SecondTeacher);
 
             ViewData["teacherId"] = teacherId;
-
-            // for the _NonAdminLayout
-            Teacher t = await _context.Teacher.FindAsync(teacherId);
-            ViewData["ProfilePicture"] = t.ProfilePicture;
-            ViewData["FullName"] = t.FullName;
 
             return View(courses.ToList());
         }

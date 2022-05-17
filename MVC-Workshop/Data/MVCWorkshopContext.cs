@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using MVC_Workshop.Models;
+using MVC_Workshop.Areas.Identity.Data;
 
 namespace MVC_Workshop.Data
 {
-    public class MVCWorkshopContext : DbContext
+    public class MVCWorkshopContext : IdentityDbContext<MVCWorkshopUser>
     {
         public MVCWorkshopContext(DbContextOptions<MVCWorkshopContext> options)
             : base(options)
@@ -20,6 +22,8 @@ namespace MVC_Workshop.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            base.OnModelCreating(builder);
+
             builder.Entity<Enrollment>()
                 .HasOne<Student>(a => a.Student)
                 .WithMany(a => a.Enrollments)

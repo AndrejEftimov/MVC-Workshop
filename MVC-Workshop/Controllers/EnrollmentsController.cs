@@ -3,27 +3,34 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using MVC_Workshop.Areas.Identity.Data;
 using MVC_Workshop.Data;
 using MVC_Workshop.Models;
 using MVC_Workshop.ViewModels;
 
 namespace MVC_Workshop.Controllers
 {
+    [Authorize]
     public class EnrollmentsController : Controller
     {
         private readonly MVCWorkshopContext _context;
+        private UserManager<MVCWorkshopUser> userManager;
         private readonly IWebHostEnvironment webHostEnvironment;
 
-        public EnrollmentsController(MVCWorkshopContext context, IWebHostEnvironment hostEnvironment)
+        public EnrollmentsController(MVCWorkshopContext context, UserManager<MVCWorkshopUser> UserManager, IWebHostEnvironment hostEnvironment)
         {
             _context = context;
+            userManager = UserManager;
             webHostEnvironment = hostEnvironment;
         }
 
         // GET: Enrollments
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index()
         {
             var enrollments = _context.Enrollment.Include(e => e.Course).Include(e => e.Student);
@@ -32,6 +39,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Enrollments/Details/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -53,6 +61,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Enrollments/Create
+        [Authorize(Roles = "Admin")]
         public IActionResult Create(int courseId)
         {
             ViewData["CourseList"] = new SelectList(_context.Course, "Id", "Title", courseId);
@@ -66,6 +75,7 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([Bind("Id,CourseId,StudentId,Semester,Year,Grade,SeminarUrl,ProjectUrl,ExamPoints,SeminarPoints,ProjectPoints,AdditionalPoints,FinishDate")] Enrollment enrollment)
         {
             if (ModelState.IsValid)
@@ -83,6 +93,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Enrollments/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -108,6 +119,7 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id, [Bind("Id,CourseId,StudentId,Semester,Year,Grade,SeminarUrl,ProjectUrl,ExamPoints,SeminarPoints,ProjectPoints,AdditionalPoints,FinishDate")] Enrollment enrollment)
         {
             if (id != enrollment.Id)
@@ -144,6 +156,7 @@ namespace MVC_Workshop.Controllers
         }
 
         // GET: Enrollments/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -167,6 +180,7 @@ namespace MVC_Workshop.Controllers
         // POST: Enrollments/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var enrollment = await _context.Enrollment.FindAsync(id);
@@ -182,8 +196,22 @@ namespace MVC_Workshop.Controllers
             return _context.Enrollment.Any(e => e.Id == id);
         }
 
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> TeacherCourseIndex(int courseId, int teacherId, int? year)
         {
+            Teacher teacher = _context.Teacher.FirstOrDefault(t => t.Id == teacherId);
+            Course course = _context.Course.FirstOrDefault(c => c.Id == courseId);
+
+            if (teacher == null || course == null)
+                return NotFound();
+
+            // get logged in user
+            MVCWorkshopUser currUser = await userManager.GetUserAsync(User);
+
+            // check if logged in user has access
+            if ((teacher.Id != currUser.TeacherId) || (course.FirstTeacherId != teacherId && course.SecondTeacherId != teacherId))
+                return LocalRedirect("/Identity/Account/AccessDenied");
+
             IQueryable<Enrollment> enrollments = _context.Enrollment.AsQueryable();
 
             enrollments = enrollments.Where(e => e.CourseId == courseId);
@@ -198,14 +226,10 @@ namespace MVC_Workshop.Controllers
             ViewData["teacherId"] = teacherId;
             ViewData["courseId"] = courseId;
 
-            // for the _NonAdminLayout
-            Teacher t = await _context.Teacher.FindAsync(teacherId);
-            ViewData["ProfilePicture"] = t.ProfilePicture;
-            ViewData["FullName"] = t.FullName;
-
             return View(enrollments.ToList());
         }
 
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> TeacherCourseEdit(int? enrollmentId, int teacherId)
         {
             if (enrollmentId == null)
@@ -213,25 +237,26 @@ namespace MVC_Workshop.Controllers
                 return NotFound();
             }
 
-            var enrollment = await _context.Enrollment.FindAsync(enrollmentId);
+            Enrollment enrollment = _context.Enrollment.Include(e => e.Course).Include(e => e.Student).FirstOrDefault(e => e.Id == enrollmentId);
+            Teacher teacher = _context.Teacher.FirstOrDefault(t => t.Id == teacherId);
 
-            if (enrollment == null)
-            {
+            if (teacher == null || enrollment == null)
                 return NotFound();
-            }
+
+            // get logged in user
+            MVCWorkshopUser currUser = await userManager.GetUserAsync(User);
+
+            // check if logged in user has access
+            if ((teacher.Id != currUser.TeacherId) || (enrollment.Course.FirstTeacherId != teacherId && enrollment.Course.SecondTeacherId != teacherId))
+                return LocalRedirect("/Identity/Account/AccessDenied");
 
             // explicit loading
-            _context.Entry(enrollment).Reference(e => e.Course).Load();
-            _context.Entry(enrollment).Reference(e => e.Student).Load();
+            //_context.Entry(enrollment).Reference(e => e.Course).Load();
+            //_context.Entry(enrollment).Reference(e => e.Student).Load();
 
             ViewData["CourseList"] = new SelectList(_context.Course, "Id", "Title", enrollment.CourseId);
             ViewData["StudentList"] = new SelectList(_context.Student, "Id", "FullNameWithId", enrollment.StudentId);
             ViewData["teacherId"] = teacherId;
-
-            // for the _NonAdminLayout
-            Teacher t = await _context.Teacher.FindAsync(teacherId);
-            ViewData["ProfilePicture"] = t.ProfilePicture;
-            ViewData["FullName"] = t.FullName;
 
             return View(enrollment);
         }
@@ -241,8 +266,21 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> TeacherCourseEdit([Bind("Id,CourseId,StudentId,Semester,Year,Grade,SeminarUrl,ProjectUrl,ExamPoints,SeminarPoints,ProjectPoints,AdditionalPoints,FinishDate")] Enrollment enrollment, int teacherId)
         {
+            Teacher teacher = _context.Teacher.FirstOrDefault(t => t.Id == teacherId);
+
+            if (teacher == null || enrollment == null)
+                return NotFound();
+
+            // get logged in user
+            MVCWorkshopUser currUser = await userManager.GetUserAsync(User);
+
+            // check if logged in user has access
+            if ((teacher.Id != currUser.TeacherId) || (enrollment.Course.FirstTeacherId != teacherId && enrollment.Course.SecondTeacherId != teacherId))
+                return LocalRedirect("/Identity/Account/AccessDenied");
+
             if (ModelState.IsValid)
             {
                 try
@@ -269,16 +307,24 @@ namespace MVC_Workshop.Controllers
             ViewData["StudentList"] = new SelectList(_context.Student, "Id", "FullNameWithId", enrollment.StudentId);
             ViewData["teacherId"] = teacherId;
 
-            // for the _NonAdminLayout
-            Teacher t = await _context.Teacher.FindAsync(teacherId);
-            ViewData["ProfilePicture"] = t.ProfilePicture;
-            ViewData["FullName"] = t.FullName;
-
             return View(enrollment);
         }
 
+        [Authorize(Roles = "Student")]
         public async Task<IActionResult> StudentIndex(int studentId)
         {
+            Student student = _context.Student.FirstOrDefault(t => t.Id == studentId);
+
+            if (student == null)
+                return NotFound();
+
+            // get logged in user
+            MVCWorkshopUser currUser = await userManager.GetUserAsync(User);
+
+            // check if logged in user has access
+            if (student.Id != currUser.StudentId)
+                return LocalRedirect("/Identity/Account/AccessDenied");
+
             IQueryable<Enrollment> enrollments = _context.Enrollment.AsQueryable();
 
             enrollments = enrollments.Where(e => e.StudentId == studentId);
@@ -286,14 +332,10 @@ namespace MVC_Workshop.Controllers
 
             ViewData["studentId"] = studentId;
 
-            // for the _NonAdminLayout
-            Student s = await _context.Student.FindAsync(studentId);
-            ViewData["ProfilePicture"] = s.ProfilePicture;
-            ViewData["FullName"] = s.FullName;
-
             return View(enrollments.ToList());
         }
 
+        [Authorize(Roles = "Student")]
         public async Task<IActionResult> StudentEdit(int? enrollmentId, int studentId)
         {
             if (enrollmentId == null)
@@ -301,12 +343,18 @@ namespace MVC_Workshop.Controllers
                 return NotFound();
             }
 
-            var enrollment = await _context.Enrollment.FindAsync(enrollmentId);
+            Enrollment enrollment = await _context.Enrollment.FindAsync(enrollmentId);
+            Student student = _context.Student.FirstOrDefault(t => t.Id == studentId);
 
-            if (enrollment == null)
-            {
+            if (student == null || enrollment == null)
                 return NotFound();
-            }
+
+            // get logged in user
+            MVCWorkshopUser currUser = await userManager.GetUserAsync(User);
+
+            // check if logged in user has access
+            if (student.Id != currUser.StudentId || student.Id != enrollment.StudentId)
+                return LocalRedirect("/Identity/Account/AccessDenied");
 
             // explicit loading
             _context.Entry(enrollment).Reference(e => e.Course).Load();
@@ -315,10 +363,6 @@ namespace MVC_Workshop.Controllers
             ViewData["CourseList"] = new SelectList(_context.Course, "Id", "Title", enrollment.CourseId);
             ViewData["StudentList"] = new SelectList(_context.Student, "Id", "FullNameWithId", enrollment.StudentId);
             ViewData["studentId"] = studentId;
-
-            // for the _NonAdminLayout
-            ViewData["ProfilePicture"] = enrollment.Student.ProfilePicture;
-            ViewData["FullName"] = enrollment.Student.FullName;
 
             EnrollmentUploadViewModel viewModel = new EnrollmentUploadViewModel
             {
@@ -334,8 +378,21 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Student")]
         public async Task<IActionResult> StudentEdit(EnrollmentUploadViewModel viewModel, int studentId)
         {
+            Student student = _context.Student.FirstOrDefault(t => t.Id == studentId);
+
+            if (student == null || viewModel.Enrollment == null)
+                return NotFound();
+
+            // get logged in user
+            MVCWorkshopUser currUser = await userManager.GetUserAsync(User);
+
+            // check if logged in user has access
+            if (student.Id != currUser.StudentId || student.Id != viewModel.Enrollment.StudentId)
+                return LocalRedirect("/Identity/Account/AccessDenied");
+
             if (ModelState.IsValid)
             {
                 try
@@ -371,6 +428,7 @@ namespace MVC_Workshop.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Roles = "Admin")]
         public IActionResult AdminCreate(int? courseId)
         {
             ViewData["CourseList"] = new SelectList(_context.Course.OrderBy(c => c.Title), "Id", "Title", courseId);
@@ -384,6 +442,7 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminCreate(EnrollmentsViewModel viewModel)
         {
             if (ModelState.IsValid)
@@ -421,6 +480,7 @@ namespace MVC_Workshop.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminEdit(int? id)
         {
             if (id == null)
@@ -446,6 +506,7 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminEdit(int id, [Bind("Id,CourseId,StudentId,Semester,Year,Grade,SeminarUrl,ProjectUrl,ExamPoints,SeminarPoints,ProjectPoints,AdditionalPoints,FinishDate")] Enrollment enrollment)
         {
             if (id != enrollment.Id)
@@ -481,6 +542,7 @@ namespace MVC_Workshop.Controllers
             return View(enrollment);
         }
 
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminEditMultiple(int? courseId)
         {
             if (courseId == null)
@@ -501,6 +563,7 @@ namespace MVC_Workshop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminEditMultiple(UnenrollMultipleViewModel viewModel)
         {
             if (ModelState.IsValid)

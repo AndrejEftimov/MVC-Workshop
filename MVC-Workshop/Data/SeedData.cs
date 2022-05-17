@@ -1,16 +1,45 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using MVC_Workshop.Areas.Identity.Data;
 using MVC_Workshop.Models;
 
 namespace MVC_Workshop.Data
 {
     public class SeedData
     {
+        public static async Task CreateUserRoles(IServiceProvider serviceProvider)
+        {
+            var RoleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var UserManager = serviceProvider.GetRequiredService<UserManager<MVCWorkshopUser>>();
+            IdentityResult roleResult;
+            //Add Admin Role
+            var roleCheck = await RoleManager.RoleExistsAsync("Admin");
+            if (!roleCheck) { roleResult = await RoleManager.CreateAsync(new IdentityRole("Admin")); }
+            roleCheck = await RoleManager.RoleExistsAsync("Student");
+            if (!roleCheck) { roleResult = await RoleManager.CreateAsync(new IdentityRole("Student")); }
+            roleCheck = await RoleManager.RoleExistsAsync("Teacher");
+            if (!roleCheck) { roleResult = await RoleManager.CreateAsync(new IdentityRole("Teacher")); }
+
+            MVCWorkshopUser user = await UserManager.FindByEmailAsync("admin@mvcworkshop.com");
+            if (user == null)
+            {
+                var User = new MVCWorkshopUser();
+                User.Email = "admin@mvcworkshop.com";
+                User.UserName = "admin@mvcworkshop.com";
+                string userPWD = "Admin123";
+                IdentityResult chkUser = await UserManager.CreateAsync(User, userPWD);
+                //Add default User to Role Admin
+                if (chkUser.Succeeded) { var result1 = await UserManager.AddToRoleAsync(User, "Admin"); }
+            }
+        }
         public static void Initialize(IServiceProvider serviceProvider)
         {
             using (var context = new MVCWorkshopContext(
             serviceProvider.GetRequiredService<
             DbContextOptions<MVCWorkshopContext>>()))
             {
+                CreateUserRoles(serviceProvider).Wait();
+
                 if (context.Student.Any() || context.Teacher.Any() || context.Course.Any() || context.Enrollment.Any())
                 {
                     return; // DB contains data

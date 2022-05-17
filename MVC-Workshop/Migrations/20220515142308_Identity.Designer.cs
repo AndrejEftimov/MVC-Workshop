@@ -4,6 +4,7 @@ using MVC_Workshop.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MVC_Workshop.Migrations
 {
     [DbContext(typeof(MVCWorkshopContext))]
-    partial class MVCWorkshopContextModelSnapshot : ModelSnapshot
+    [Migration("20220515142308_Identity")]
+    partial class Identity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -197,18 +199,8 @@ namespace MVC_Workshop.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("StudentId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("TeacherId")
-                        .HasColumnType("int");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
@@ -226,10 +218,6 @@ namespace MVC_Workshop.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.HasIndex("StudentId");
-
-                    b.HasIndex("TeacherId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -466,21 +454,6 @@ namespace MVC_Workshop.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("MVC_Workshop.Areas.Identity.Data.MVCWorkshopUser", b =>
-                {
-                    b.HasOne("MVC_Workshop.Models.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId");
-
-                    b.HasOne("MVC_Workshop.Models.Teacher", "Teacher")
-                        .WithMany()
-                        .HasForeignKey("TeacherId");
-
-                    b.Navigation("Student");
-
-                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("MVC_Workshop.Models.Course", b =>

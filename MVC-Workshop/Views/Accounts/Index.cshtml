@@ -1,0 +1,68 @@
+﻿@model IEnumerable<MVCWorkshopUser>
+
+@{
+    ViewData["Title"] = "AccountsIndex";
+    string profilePicture;
+}
+
+<h1>Users</h1>
+
+<p>
+    <a asp-controller="Accounts" asp-action="Create">Create New</a>
+</p>
+
+<form asp-controller="Accounts" asp-action="Index" method="get">
+    <p>
+        Email <input name=email type=text /> &ensp;
+        Role <input name=role type="text" /> &ensp;
+        <input type="submit" value="Search" />
+    </p>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                <!-- for profile picture -->
+            </th>
+            <th>
+                Email
+            </th>
+            <th>
+                Phone Number
+            </th>
+            <th>
+                Role
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (MVCWorkshopUser u in Model)
+        {
+            // set value for profilePicture
+            if (u.StudentId != null) { profilePicture = u.Student.ProfilePicture; }
+            else if (u.TeacherId != null) { profilePicture = u.Teacher.ProfilePicture; }
+            else { profilePicture = ""; }
+
+            <tr>
+                <td style="padding: 2px 0 2px 0;">
+                    <img src="~/images/@profilePicture" style="height: 36px; border-radius: 25px;"/>
+                </td>
+                <td>
+                    @u.Email
+                </td>
+                <td>
+                    @u.PhoneNumber
+                </td>
+                <td>
+                    @u.Role
+                </td>
+                <td>
+                    <a asp-controller="Accounts" asp-action="AdminEdit" asp-route-userId="@u.Id">Edit</a> | 
+                    <a asp-controller="Accounts" asp-action="Delete" asp-route-id="@u.Id">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
